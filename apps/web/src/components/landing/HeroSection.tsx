@@ -78,13 +78,19 @@ export function HeroSection() {
         variants={fadeUp}
         className="mt-10 flex flex-col gap-3 sm:flex-row"
       >
-        <Button size="lg" className="rounded-full px-8" render={<Link href="/verify" />}>
+        <Button
+          size="lg"
+          className="rounded-full px-8"
+          nativeButton={false}
+          render={<Link href="/verify" />}
+        >
           Verify a Ticket
         </Button>
         <Button
           size="lg"
           variant="outline"
           className="rounded-full px-8"
+          nativeButton={false}
           render={<Link href="/marketplace" />}
         >
           Browse Marketplace
