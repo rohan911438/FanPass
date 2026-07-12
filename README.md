@@ -27,6 +27,7 @@ Injective EVM Testnet — no login, no auth system.
 
 ## Status
 
-Phase 1 in progress: monorepo scaffold, design system shell, wallet connect, Landing page.
-See §11 of the architecture doc for the full phase plan.
+Phase 1 complete: monorepo scaffold, design system shell, wallet connect (Injective EVM Testnet), Landing
+page, nav/shell, and a working Express API skeleton. All four routes render, both dev servers verified
+running. See §11 of the architecture doc for the full phase plan — Phase 2 (verification core) is next.
 "# FanPass" 
