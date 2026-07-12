@@ -1,0 +1,22 @@
+{
+  "name": "fanpass",
+  "private": true,
+  "version": "0.1.0",
+  "description": "FanPass — AI-powered Ticket Trust Network for peer-to-peer World Cup ticket resale.",
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "lint:web": "npm run lint --workspace=apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

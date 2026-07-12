@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build outputs
+.next/
+out/
+dist/
+build/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# firebase
+.firebase/
+firebase-debug.log
+*-service-account*.json
+
+# hardhat
+apps/contracts/cache/
+apps/contracts/artifacts/
+apps/contracts/typechain-types/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# editor/os
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# typescript
+*.tsbuildinfo
