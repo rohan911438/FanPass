@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, Store, Wallet, QrCode, ArrowRight, Scan, AlertTriangle, FileText, Check } from "lucide-react";
+import { ShieldCheck, Store, Wallet, ArrowRight, Scan, AlertTriangle, FileText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MockTicket {
@@ -50,6 +50,13 @@ const mockTickets: MockTicket[] = [
   },
 ];
 
+const SCAN_STEPS = [
+  "OCR Agent: Extracting metadata...",
+  "QR Agent: Decoding barcode fingerprint...",
+  "Fraud Agent: Scanning for tampered pixels...",
+  "Pricing Agent: Comparing comps & fair value...",
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   show: (i: number) => ({
@@ -64,24 +71,15 @@ export function HeroSection() {
   const [scanState, setScanState] = useState<"idle" | "scanning" | "completed">("idle");
   const [currentStep, setCurrentStep] = useState(0);
 
-  const steps = [
-    "OCR Agent: Extracting metadata...",
-    "QR Agent: Decoding barcode fingerprint...",
-    "Fraud Agent: Scanning for tampered pixels...",
-    "Pricing Agent: Comparing comps & fair value...",
-  ];
-
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (scanState === "scanning") {
-      if (currentStep < steps.length) {
-        timer = setTimeout(() => {
-          setCurrentStep((prev) => prev + 1);
-        }, 800);
+    if (scanState !== "scanning") return;
+    const timer = setTimeout(() => {
+      if (currentStep < SCAN_STEPS.length) {
+        setCurrentStep((prev) => prev + 1);
       } else {
         setScanState("completed");
       }
-    }
+    }, 800);
     return () => clearTimeout(timer);
   }, [scanState, currentStep]);
 
@@ -262,7 +260,7 @@ export function HeroSection() {
                     <div className="absolute left-0 right-0 h-[2px] bg-primary shadow-[0_0_8px_var(--primary)] animate-[bounce_1.5s_infinite]" />
                     
                     <div className="space-y-2.5">
-                      {steps.map((step, idx) => (
+                      {SCAN_STEPS.map((step, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-xs font-mono">
                           {currentStep > idx ? (
                             <Check className="h-3.5 w-3.5 text-success shrink-0" />

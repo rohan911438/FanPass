@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion";
 import { QrCode, Repeat, UserCheck, Tag, ShieldCheck, ShieldAlert, ArrowUpRight } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface BentoItem {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   badge: string;
   description: string;

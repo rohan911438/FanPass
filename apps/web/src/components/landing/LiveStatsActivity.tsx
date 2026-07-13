@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, ShieldCheck, Activity, Users, Flame } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface StatItem {
   label: string;
   value: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
 }
 
