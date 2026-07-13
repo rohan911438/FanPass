@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import { CalendarDays, MapPin, ShieldCheck, Ticket as TicketIcon } from "lucide-react";
 import type { Ticket, TrustScore } from "@fanpass/shared";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STATUS_LABEL: Record<Ticket["status"], string> = {
   unverified: "Unverified",
@@ -20,10 +21,14 @@ function formatDate(iso: string) {
 interface TicketCardProps {
   ticket: Ticket;
   trustScore?: TrustScore | null;
+  /** Shown alongside the Trust Score row — the marketplace grid's ask price. */
+  askPrice?: number;
+  /** Marketplace-specific extras (seller reputation, AI Suggested Deal ribbon, transfer count…). */
+  footer?: ReactNode;
 }
 
-/** Reusable ticket summary — used here and again in Phase 3's marketplace grid. */
-export function TicketCard({ ticket, trustScore }: TicketCardProps) {
+/** Reusable ticket summary — used on /verify and again in the marketplace grid/detail. */
+export function TicketCard({ ticket, trustScore, askPrice, footer }: TicketCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -51,9 +56,11 @@ export function TicketCard({ ticket, trustScore }: TicketCardProps) {
           <span className="flex items-center gap-2 text-foreground">
             <ShieldCheck className="size-3.5 text-success" />
             Trust Score {trustScore.score}/100
+            {askPrice !== undefined && <span className="ml-auto font-semibold text-foreground">{askPrice} USDC</span>}
           </span>
         )}
       </CardContent>
+      {footer && <CardFooter>{footer}</CardFooter>}
     </Card>
   );
 }

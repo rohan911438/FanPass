@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { walletAddressSchema } from "./common";
 
 /**
  * Upload form (apps/web) and the verify controller (apps/api) both validate against this schema —
@@ -9,7 +10,7 @@ export const ticketUploadSchema = z.object({
   eventDate: z.iso.datetime(),
   venue: z.string().min(2).max(120),
   seatInfo: z.string().max(60).optional(),
-  sellerAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid EVM wallet address"),
+  sellerAddress: walletAddressSchema,
 });
 
 export type TicketUploadInput = z.infer<typeof ticketUploadSchema>;

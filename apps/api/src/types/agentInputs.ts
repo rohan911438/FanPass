@@ -36,4 +36,16 @@ export interface OwnershipAgentInput {
 export interface PricingAgentInput {
   eventName: string;
   venue: string;
+  /** Other active listings' ask prices for the same event + venue — real comps once listings exist. */
+  comps?: number[];
+}
+
+export interface SellerReputationAgentInput {
+  walletAddress: WalletAddress;
+  stats: {
+    ticketsBought: number;
+    ticketsSold: number;
+    disputesRaised: number;
+    disputesLost: number;
+  };
 }

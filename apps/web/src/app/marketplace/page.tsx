@@ -1,20 +1,49 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Store } from "lucide-react";
-import { PageHeader } from "@/components/shared/PageHeader";
+import type { ListingFilters as ListingFiltersValue } from "@fanpass/shared";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { ListingFilters } from "@/components/marketplace/ListingFilters";
+import { ListingGrid } from "@/components/marketplace/ListingGrid";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getListings } from "@/lib/api/listings";
+import { queryKeys } from "@/lib/query/queryClient";
 
 export default function MarketplacePage() {
+  const [filters, setFilters] = useState<ListingFiltersValue>({});
+
+  const { data: listings, isLoading } = useQuery({
+    queryKey: queryKeys.listings(filters as Record<string, unknown>),
+    queryFn: () => getListings(filters),
+  });
+
   return (
     <div className="flex-1 pb-24">
       <PageHeader
         title="Marketplace"
         description="Only verified tickets, ranked by trust score and seller reputation."
       />
-      <div className="mx-auto max-w-5xl px-6">
-        <EmptyState
-          icon={Store}
-          title="Listings arrive in Phase 3"
-          description="Browse, filter, buy, sell, relist, and cancel — built on top of the verification pipeline."
-        />
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6">
+        <ListingFilters value={filters} onChange={setFilters} />
+
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-56 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : !listings || listings.length === 0 ? (
+          <EmptyState
+            icon={Store}
+            title="No listings match your filters"
+            description="Verify a ticket on /verify and list it, or widen your price and trust score filters."
+          />
+        ) : (
+          <ListingGrid listings={listings} />
+        )}
       </div>
     </div>
   );

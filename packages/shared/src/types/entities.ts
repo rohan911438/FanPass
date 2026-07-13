@@ -68,3 +68,80 @@ export interface AgentLog {
   latencyMs: number;
   createdAt: string;
 }
+
+/**
+ * marketplaceListings/{listingId}. eventName/venue/eventDate/seatInfo/imageUrl are a denormalized
+ * snapshot of the ticket at listing time — Firestore has no joins, and the grid/filters/pricing comps
+ * all need these fields without an extra round-trip per card. See ARCHITECTURE.md §4.
+ */
+export interface MarketplaceListing {
+  listingId: string;
+  ticketId: string;
+  sellerAddress: WalletAddress;
+  askPrice: number;
+  currency: Currency;
+  aiSuggestedPrice: { min: number; max: number; fair: number };
+  escrow: { status: EscrowStatus; onChainEscrowId: string | null };
+  status: ListingStatus;
+  eventName: string;
+  venue: string;
+  eventDate: string;
+  seatInfo?: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** transactions/{txId} — full audit trail: purchase, transfer, refund. */
+export type TransactionType = "purchase" | "refund";
+export type TransactionStatus = "pending" | "completed" | "failed";
+
+export interface Transaction {
+  txId: string;
+  type: TransactionType;
+  ticketId: string;
+  listingId: string;
+  fromAddress: WalletAddress;
+  toAddress: WalletAddress;
+  amount: number;
+  currency: Currency;
+  txHash: string | null;
+  status: TransactionStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** users/{walletAddress}. The trust SCORE itself lives in trustScores/, not duplicated here. */
+export interface UserProfile {
+  walletAddress: WalletAddress;
+  displayName?: string;
+  reputationTier: ReputationTier;
+  stats: {
+    ticketsBought: number;
+    ticketsSold: number;
+    disputesRaised: number;
+    disputesLost: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** attendance/{attendanceId} — populated by real venue check-in in Phase 4/6; empty until then. */
+export interface Attendance {
+  attendanceId: string;
+  ticketId: string;
+  walletAddress: WalletAddress;
+  venue: string;
+  checkedInAt: string;
+}
+
+/** memoryCards/{cardId} — populated after attendance in Phase 4/6; empty until then. */
+export interface MemoryCard {
+  cardId: string;
+  ticketId: string;
+  walletAddress: WalletAddress;
+  aiSummary: string;
+  highlights: string[];
+  shareImageUrl: string;
+  mintedAt: string;
+}

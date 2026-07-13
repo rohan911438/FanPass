@@ -41,3 +41,9 @@ export async function findTicketByQrHash(qrHash: string, excludeTicketId: string
   const match = snap.docs.map((d) => d.data() as Ticket).find((t) => t.ticketId !== excludeTicketId);
   return match ?? null;
 }
+
+/** Batch fetch for the Wallet aggregate — plain Promise.all rather than an `in` query to dodge its size cap. */
+export async function findTicketsByIds(ticketIds: string[]): Promise<Ticket[]> {
+  const tickets = await Promise.all(ticketIds.map((id) => getTicketById(id)));
+  return tickets.filter((ticket): ticket is Ticket => ticket !== null);
+}

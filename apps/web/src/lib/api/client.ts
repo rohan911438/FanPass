@@ -27,3 +27,12 @@ export async function apiPostFormData<T>(path: string, formData: FormData): Prom
   const res = await fetch(`${API_URL}/api/v1${path}`, { method: "POST", body: formData });
   return parseJsonOrThrow(res);
 }
+
+export async function apiPostJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}/api/v1${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return parseJsonOrThrow(res);
+}

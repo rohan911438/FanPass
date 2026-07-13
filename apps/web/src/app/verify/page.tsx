@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldQuestion } from "lucide-react";
-import type { Ticket, VerificationProgress } from "@fanpass/shared";
+import Link from "next/link";
+import { CheckCircle2, ShieldQuestion } from "lucide-react";
+import type { MarketplaceListing, Ticket, VerificationProgress } from "@fanpass/shared";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
+import { ListTicketForm } from "@/components/marketplace/ListTicketForm";
 import { TicketUploadForm } from "@/components/ticket/TicketUploadForm";
 import { TrustScoreCard } from "@/components/ticket/TrustScoreCard";
 import { VerificationStepper } from "@/components/ticket/VerificationStepper";
@@ -19,6 +21,12 @@ type FlowState =
 export default function VerifyPage() {
   const { isConnected } = useWallet();
   const [flow, setFlow] = useState<FlowState>({ step: "upload" });
+  const [listing, setListing] = useState<MarketplaceListing | null>(null);
+
+  function reset() {
+    setFlow({ step: "upload" });
+    setListing(null);
+  }
 
   return (
     <div className="flex-1 pb-24">
@@ -43,7 +51,26 @@ export default function VerifyPage() {
         ) : (
           <div className="flex flex-col gap-4">
             <TrustScoreCard ticket={flow.ticket} progress={flow.progress} />
-            <Button variant="outline" onClick={() => setFlow({ step: "upload" })} className="self-start">
+
+            {flow.progress.ticketStatus === "verified" &&
+              (listing ? (
+                <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
+                  <CheckCircle2 className="size-4" />
+                  Listed for {listing.askPrice} USDC —{" "}
+                  <Link href={`/marketplace/listing/${listing.listingId}`} className="underline underline-offset-2">
+                    view on the marketplace
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <ListTicketForm
+                  ticketId={flow.ticket.ticketId}
+                  suggestedPrice={flow.progress.agentResults.pricing?.output.fairSuggested}
+                  onListed={setListing}
+                />
+              ))}
+
+            <Button variant="outline" onClick={reset} className="self-start">
               Verify another ticket
             </Button>
           </div>

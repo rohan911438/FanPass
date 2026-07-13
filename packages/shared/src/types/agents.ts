@@ -1,4 +1,4 @@
-import type { TicketStatus } from "./entities";
+import type { ReputationTier, TicketStatus } from "./entities";
 
 export type AgentName =
   | "ocr"
@@ -118,4 +118,21 @@ export interface VerificationProgress {
   agentResults: VerificationAgentResults;
   flags: string[];
   trustScore: TrustScore | null;
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace-time agents (Phase 3)
+// ---------------------------------------------------------------------------
+
+/** Real — driven by actual users/{address}.stats, not fabricated. Recomputed after every transaction. */
+export interface SellerReputationAgentOutput {
+  score: number; // 0-100, written straight into trustScores/user_{address}
+  reputationTier: ReputationTier;
+  breakdown: TrustScoreBreakdown;
+}
+
+/** Real ranking/filtering over the live listing feed — no randomness, pure function of its inputs. */
+export interface MarketplaceAgentOutput {
+  rankedListingIds: string[];
+  suggestedDealListingIds: string[];
 }
