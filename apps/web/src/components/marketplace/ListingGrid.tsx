@@ -22,6 +22,7 @@ function listingToTicketView(summary: ListingSummary): Ticket {
     seatInfo: listing.seatInfo,
     sellerAddress: listing.sellerAddress,
     qrHash: null,
+    tokenId: null,
     imageUrl: listing.imageUrl,
     status: "listed",
     createdAt: listing.createdAt,

@@ -9,7 +9,7 @@ export type TicketStatus =
   | "checked_in"
   | "used";
 
-export type ListingStatus = "active" | "pending_escrow" | "sold" | "cancelled";
+export type ListingStatus = "active" | "pending_escrow" | "sold" | "cancelled" | "expired";
 
 export type EscrowStatus = "none" | "funded" | "released" | "refunded" | "disputed";
 
@@ -31,6 +31,8 @@ export interface Ticket {
   originalIssuer?: string;
   imageUrl: string;
   status: TicketStatus;
+  /** OwnershipRegistry tokenId (decimal string) once minted on-chain — null until verification mints it. */
+  tokenId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,6 +77,7 @@ export interface AgentLog {
  * all need these fields without an extra round-trip per card. See ARCHITECTURE.md §4.
  */
 export interface MarketplaceListing {
+  /** The on-chain EscrowMarketplace listingId (decimal string) — not a locally-generated id. */
   listingId: string;
   ticketId: string;
   sellerAddress: WalletAddress;
@@ -83,6 +86,8 @@ export interface MarketplaceListing {
   aiSuggestedPrice: { min: number; max: number; fair: number };
   escrow: { status: EscrowStatus; onChainEscrowId: string | null };
   status: ListingStatus;
+  /** ISO timestamp, null = no expiry (mirrors the contract's expiresAt == 0 convention). */
+  expiresAt: string | null;
   eventName: string;
   venue: string;
   eventDate: string;

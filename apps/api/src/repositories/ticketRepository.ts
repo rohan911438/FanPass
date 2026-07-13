@@ -3,7 +3,7 @@ import { getDb } from "@/config/localStore";
 
 const COLLECTION = "tickets";
 
-export type NewTicketInput = Omit<Ticket, "status" | "qrHash" | "createdAt" | "updatedAt">;
+export type NewTicketInput = Omit<Ticket, "status" | "qrHash" | "tokenId" | "createdAt" | "updatedAt">;
 
 /** Reserves a ticket id before the file upload completes, so the storage path can be keyed by it. */
 export function generateTicketId(): string {
@@ -15,6 +15,7 @@ export async function createTicket(input: NewTicketInput): Promise<Ticket> {
   const ticket: Ticket = {
     ...input,
     qrHash: null,
+    tokenId: null,
     status: "unverified",
     createdAt: now,
     updatedAt: now,
@@ -46,4 +47,10 @@ export async function findTicketByQrHash(qrHash: string, excludeTicketId: string
 export async function findTicketsByIds(ticketIds: string[]): Promise<Ticket[]> {
   const tickets = await Promise.all(ticketIds.map((id) => getTicketById(id)));
   return tickets.filter((ticket): ticket is Ticket => ticket !== null);
+}
+
+/** tokenId -> ticketId is a one-way hash on-chain (keccak256) — this is the only way back, for syncing chain events. */
+export async function findTicketByTokenId(tokenId: string): Promise<Ticket | null> {
+  const snap = await getDb().collection(COLLECTION).where("tokenId", "==", tokenId).limit(1).get();
+  return snap.empty ? null : (snap.docs[0].data() as Ticket);
 }

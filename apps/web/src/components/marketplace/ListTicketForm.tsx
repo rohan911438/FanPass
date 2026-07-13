@@ -1,21 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Tag } from "lucide-react";
-import type { MarketplaceListing } from "@fanpass/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCreateListing } from "@/hooks/useCreateListing";
 import { useWallet } from "@/hooks/useWallet";
-import { createListing } from "@/lib/api/listings";
 
 interface ListTicketFormProps {
   ticketId: string;
   suggestedPrice?: number;
-  onListed: (listing: MarketplaceListing) => void;
+  onListed: (listingId: string | null) => void;
 }
 
 /** The seller-side entry point into the marketplace, right after a ticket passes verification. */
@@ -23,17 +21,22 @@ export function ListTicketForm({ ticketId, suggestedPrice, onListed }: ListTicke
   const { address } = useWallet();
   const [askPrice, setAskPrice] = useState(suggestedPrice ? String(suggestedPrice) : "");
 
-  const mutation = useMutation({
-    mutationFn: () =>
-      createListing({ ticketId, sellerAddress: address!, askPrice: Number(askPrice), currency: "USDC" }),
-    onSuccess: (listing) => {
-      toast.success("Ticket listed on the marketplace.");
-      onListed(listing);
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Listing failed. Try again.");
-    },
-  });
+  const mutation = useCreateListing();
+
+  function handleSubmit() {
+    mutation.mutate(
+      { ticketId, askPrice: Number(askPrice) },
+      {
+        onSuccess: ({ listingId }) => {
+          toast.success("Ticket listed on the marketplace.");
+          onListed(listingId);
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : "Listing failed. Try again.");
+        },
+      }
+    );
+  }
 
   return (
     <Card>
@@ -56,11 +59,11 @@ export function ListTicketForm({ ticketId, suggestedPrice, onListed }: ListTicke
         </div>
         <Button
           disabled={!address || !askPrice || mutation.isPending}
-          onClick={() => mutation.mutate()}
+          onClick={handleSubmit}
           className="w-fit gap-1.5 px-6"
         >
           <Tag className="size-4" />
-          {mutation.isPending ? "Listing…" : "List for sale"}
+          {mutation.isPending ? "Confirm in wallet…" : "List for sale"}
         </Button>
       </CardContent>
     </Card>

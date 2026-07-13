@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, ShieldQuestion } from "lucide-react";
-import type { MarketplaceListing, Ticket, VerificationProgress } from "@fanpass/shared";
+import type { Ticket, VerificationProgress } from "@fanpass/shared";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,11 @@ type FlowState =
 export default function VerifyPage() {
   const { isConnected } = useWallet();
   const [flow, setFlow] = useState<FlowState>({ step: "upload" });
-  const [listing, setListing] = useState<MarketplaceListing | null>(null);
+  const [listingId, setListingId] = useState<string | null | undefined>(undefined);
 
   function reset() {
     setFlow({ step: "upload" });
-    setListing(null);
+    setListingId(undefined);
   }
 
   return (
@@ -53,20 +53,25 @@ export default function VerifyPage() {
             <TrustScoreCard ticket={flow.ticket} progress={flow.progress} />
 
             {flow.progress.ticketStatus === "verified" &&
-              (listing ? (
+              (listingId !== undefined ? (
                 <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
                   <CheckCircle2 className="size-4" />
-                  Listed for {listing.askPrice} USDC —{" "}
-                  <Link href={`/marketplace/listing/${listing.listingId}`} className="underline underline-offset-2">
-                    view on the marketplace
-                  </Link>
+                  Listed on the marketplace
+                  {listingId && (
+                    <>
+                      {" — "}
+                      <Link href={`/marketplace/listing/${listingId}`} className="underline underline-offset-2">
+                        view it
+                      </Link>
+                    </>
+                  )}
                   .
                 </div>
               ) : (
                 <ListTicketForm
                   ticketId={flow.ticket.ticketId}
                   suggestedPrice={flow.progress.agentResults.pricing?.output.fairSuggested}
-                  onListed={setListing}
+                  onListed={setListingId}
                 />
               ))}
 

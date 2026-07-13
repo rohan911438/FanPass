@@ -4,6 +4,7 @@ import { env } from "@/config/env";
 import { STORAGE_PUBLIC_DIR } from "@/config/localStore";
 import { errorHandler, notFoundHandler } from "@/middleware/errorHandler";
 import { requestLogger } from "@/middleware/requestLogger";
+import "@/mcp/tools"; // registers every MCP tool as a side effect, before any request can call one
 import { apiRouter } from "@/routes";
 
 export function createApp() {

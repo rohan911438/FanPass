@@ -3,22 +3,22 @@ import { getDb } from "@/config/localStore";
 
 const COLLECTION = "ownershipCertificates";
 
-/**
- * Mocked Firestore record standing in for the on-chain Ownership Certificate NFT until Phase 4 wires
- * up OwnershipRegistry.sol. tokenId/contractAddress stay null so callers can tell mock from real.
- */
-export async function createMockOwnershipCertificate(
+/** Mirrors the real Ownership Certificate minted on-chain by OwnershipRegistry.registerTicket. */
+export async function createOwnershipCertificate(
   ticketId: string,
-  ownerAddress: WalletAddress
+  ownerAddress: WalletAddress,
+  tokenId: string,
+  contractAddress: string,
+  txHash: string
 ): Promise<OwnershipCertificate> {
   const now = new Date().toISOString();
   const cert: OwnershipCertificate = {
     certId: `cert_${ticketId}`,
     ticketId,
-    tokenId: null,
-    contractAddress: null,
+    tokenId,
+    contractAddress,
     currentOwner: ownerAddress,
-    history: [{ walletAddress: ownerAddress, txHash: null, timestamp: now }],
+    history: [{ walletAddress: ownerAddress, txHash, timestamp: now }],
     mintedAt: now,
   };
   await getDb().collection(COLLECTION).doc(cert.certId).set(cert);

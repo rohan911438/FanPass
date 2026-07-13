@@ -1,18 +1,12 @@
-import type {
-  CreateListingInput,
-  ListingFilters,
-  ListingSummary,
-  MarketplaceListing,
-  Transaction,
-  WalletAddress,
-} from "@fanpass/shared";
+import type { ListingFilters, ListingSummary, MarketplaceListing, PricingAgentOutput } from "@fanpass/shared";
 import { runMarketplaceAgent, type MarketplaceListingCandidate } from "@/ai/agents/marketplace.agent";
+import { runPricingAgent } from "@/ai/agents/pricing.agent";
 import { ApiError } from "@/middleware/errorHandler";
-import { getListingById, listActiveListings } from "@/repositories/listingRepository";
+import { findActiveListingPricesForEvent, getListingById, listActiveListings } from "@/repositories/listingRepository";
 import { getOwnershipCertificateByTicketId } from "@/repositories/ownershipCertificateRepository";
 import { getTrustScore } from "@/repositories/trustScoreRepository";
 import { getUser } from "@/repositories/userRepository";
-import * as trustEngineMarketplace from "@/trustEngine/marketplace";
+import { syncFromChainTx } from "@/trustEngine/marketplace";
 
 async function toListingSummary(listing: MarketplaceListing): Promise<ListingSummary> {
   const [trustScore, cert, seller] = await Promise.all([
@@ -103,19 +97,14 @@ export async function getListingDetail(listingId: string): Promise<ListingSummar
   return { ...summary, aiSuggestedDeal: ranking.output.suggestedDealListingIds.includes(listingId) };
 }
 
-export function createListing(input: CreateListingInput): Promise<MarketplaceListing> {
-  return trustEngineMarketplace.listTicket(input.ticketId, input.sellerAddress as WalletAddress, input.askPrice);
+/** Advisory-only: a fair-price preview shown while the seller composes their on-chain listing tx. */
+export async function getPricingSuggestion(eventName: string, venue: string): Promise<PricingAgentOutput> {
+  const comps = await findActiveListingPricesForEvent(eventName, venue);
+  const pricing = await runPricingAgent({ eventName, venue, comps });
+  return pricing.output;
 }
 
-/** Mocked instant settlement: opens then immediately releases escrow — see trustEngine/marketplace.ts. */
-export async function buyListing(
-  listingId: string,
-  buyerAddress: WalletAddress
-): Promise<{ listing: MarketplaceListing; transaction: Transaction }> {
-  await trustEngineMarketplace.openEscrow(listingId, buyerAddress);
-  return trustEngineMarketplace.releaseEscrow(listingId, buyerAddress);
-}
-
-export function cancelListing(listingId: string, sellerAddress: WalletAddress): Promise<MarketplaceListing> {
-  return trustEngineMarketplace.cancelListing(listingId, sellerAddress);
+/** Mirrors a confirmed list/buy/cancel transaction (signed by the connected wallet) into the local store. */
+export function syncFromChain(txHash: `0x${string}`): Promise<{ processedEvents: string[] }> {
+  return syncFromChainTx(txHash);
 }

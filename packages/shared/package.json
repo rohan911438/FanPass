@@ -10,6 +10,7 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
+    "viem": "^2.55.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Ban, CheckCircle2, Repeat, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrustScoreCard } from "@/components/ticket/TrustScoreCard";
 import { WalletConnectButton } from "@/components/shared/WalletConnectButton";
+import { useBuyTicket } from "@/hooks/useBuyTicket";
+import { useCancelListing } from "@/hooks/useCancelListing";
 import { useVerificationProgress } from "@/hooks/useVerificationProgress";
 import { useWallet } from "@/hooks/useWallet";
-import { buyListing, cancelListing, getListingDetail } from "@/lib/api/listings";
+import { getListingDetail } from "@/lib/api/listings";
 import { queryKeys } from "@/lib/query/queryClient";
 
 const REPUTATION_LABEL: Record<string, string> = {
@@ -48,32 +50,37 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
 
   const { data: progress } = useVerificationProgress(summary?.listing.ticketId);
 
-  const buyMutation = useMutation({
-    mutationFn: () => buyListing(listingId, address!),
-    onSuccess: () => {
-      setJustBought(true);
-      toast.success("Purchase complete — the ticket is now in your wallet.");
-      queryClient.invalidateQueries({ queryKey: queryKeys.listingDetail(listingId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.listings() });
-      if (address) queryClient.invalidateQueries({ queryKey: queryKeys.wallet(address) });
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Purchase failed. Try again.");
-    },
-  });
+  const buyMutation = useBuyTicket(address);
+  const cancelMutation = useCancelListing(address);
 
-  const cancelMutation = useMutation({
-    mutationFn: () => cancelListing(listingId, address!),
-    onSuccess: () => {
-      toast.success("Listing cancelled.");
-      queryClient.invalidateQueries({ queryKey: queryKeys.listingDetail(listingId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.listings() });
-      if (address) queryClient.invalidateQueries({ queryKey: queryKeys.wallet(address) });
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Cancel failed. Try again.");
-    },
-  });
+  function handleBuy() {
+    if (!address || !summary) return;
+    buyMutation.mutate(
+      { listingId, askPrice: summary.listing.askPrice, buyerAddress: address as `0x${string}` },
+      {
+        onSuccess: () => {
+          setJustBought(true);
+          toast.success("Purchase complete — the ticket is now in your wallet.");
+          queryClient.invalidateQueries({ queryKey: queryKeys.listingDetail(listingId) });
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : "Purchase failed. Try again.");
+        },
+      }
+    );
+  }
+
+  function handleCancel() {
+    cancelMutation.mutate(listingId, {
+      onSuccess: () => {
+        toast.success("Listing cancelled.");
+        queryClient.invalidateQueries({ queryKey: queryKeys.listingDetail(listingId) });
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : "Cancel failed. Try again.");
+      },
+    });
+  }
 
   if (isLoading || !summary) {
     return (
@@ -137,11 +144,11 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
                   variant="destructive"
                   size="sm"
                   disabled={cancelMutation.isPending}
-                  onClick={() => cancelMutation.mutate()}
+                  onClick={handleCancel}
                   className="w-fit gap-1.5"
                 >
                   <Ban className="size-3.5" />
-                  {cancelMutation.isPending ? "Cancelling…" : "Cancel listing"}
+                  {cancelMutation.isPending ? "Confirm in wallet…" : "Cancel listing"}
                 </Button>
               )}
             </div>
@@ -151,13 +158,9 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
               <WalletConnectButton />
             </div>
           ) : (
-            <Button
-              disabled={!canBuy || buyMutation.isPending}
-              onClick={() => buyMutation.mutate()}
-              className="self-start gap-1.5 px-6"
-            >
+            <Button disabled={!canBuy || buyMutation.isPending} onClick={handleBuy} className="self-start gap-1.5 px-6">
               <ShoppingCart className="size-4" />
-              {buyMutation.isPending ? "Processing…" : `Buy for ${listing.askPrice} USDC`}
+              {buyMutation.isPending ? "Confirm in wallet…" : `Buy for ${listing.askPrice} USDC`}
             </Button>
           )}
         </CardContent>
@@ -173,6 +176,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
             seatInfo: listing.seatInfo,
             sellerAddress: listing.sellerAddress,
             qrHash: null,
+            tokenId: null,
             imageUrl: listing.imageUrl,
             status: "listed",
             createdAt: listing.createdAt,

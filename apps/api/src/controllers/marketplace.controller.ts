@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
-import type { BuyListingInput, CancelListingInput, CreateListingInput, ListingFilters, WalletAddress } from "@fanpass/shared";
+import type { ListingFilters, SyncTxInput } from "@fanpass/shared";
+import { ApiError } from "@/middleware/errorHandler";
 import * as marketplaceService from "@/services/marketplaceService";
 import { asyncHandler } from "@/utils/asyncHandler";
 
@@ -13,11 +14,6 @@ function parseFilters(query: Request["query"]): ListingFilters {
   return filters;
 }
 
-export const postListing = asyncHandler(async (req: Request, res: Response) => {
-  const listing = await marketplaceService.createListing(req.body as CreateListingInput);
-  res.status(201).json(listing);
-});
-
 export const getListings = asyncHandler(async (req: Request, res: Response) => {
   const listings = await marketplaceService.getListings(parseFilters(req.query));
   res.json(listings);
@@ -28,14 +24,17 @@ export const getListingDetail = asyncHandler(async (req: Request, res: Response)
   res.json(summary);
 });
 
-export const postBuyListing = asyncHandler(async (req: Request, res: Response) => {
-  const { buyerAddress } = req.body as BuyListingInput;
-  const result = await marketplaceService.buyListing(req.params.id, buyerAddress as WalletAddress);
-  res.json(result);
+export const getPricingSuggestion = asyncHandler(async (req: Request, res: Response) => {
+  const { eventName, venue } = req.query;
+  if (typeof eventName !== "string" || typeof venue !== "string") {
+    throw new ApiError(400, "eventName and venue query params are required.");
+  }
+  const suggestion = await marketplaceService.getPricingSuggestion(eventName, venue);
+  res.json(suggestion);
 });
 
-export const postCancelListing = asyncHandler(async (req: Request, res: Response) => {
-  const { sellerAddress } = req.body as CancelListingInput;
-  const listing = await marketplaceService.cancelListing(req.params.id, sellerAddress as WalletAddress);
-  res.json(listing);
+export const postSync = asyncHandler(async (req: Request, res: Response) => {
+  const { txHash } = req.body as SyncTxInput;
+  const result = await marketplaceService.syncFromChain(txHash as `0x${string}`);
+  res.json(result);
 });

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ListingFilters } from "@/components/marketplace/ListingFilters";
 import { ListingGrid } from "@/components/marketplace/ListingGrid";
+import { TestUsdcFaucetButton } from "@/components/marketplace/TestUsdcFaucetButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getListings } from "@/lib/api/listings";
 import { queryKeys } from "@/lib/query/queryClient";
@@ -27,7 +28,10 @@ export default function MarketplacePage() {
         description="Only verified tickets, ranked by trust score and seller reputation."
       />
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6">
-        <ListingFilters value={filters} onChange={setFilters} />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <ListingFilters value={filters} onChange={setFilters} />
+          <TestUsdcFaucetButton />
+        </div>
 
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

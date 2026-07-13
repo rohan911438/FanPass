@@ -5,11 +5,6 @@ const COLLECTION = "marketplaceListings";
 
 export type NewListingInput = Omit<MarketplaceListing, "escrow" | "status" | "createdAt" | "updatedAt">;
 
-/** Reserves a listing id up front, mirroring ticketRepository's pattern. */
-export function generateListingId(): string {
-  return getDb().collection(COLLECTION).doc().id;
-}
-
 export async function createListing(input: NewListingInput): Promise<MarketplaceListing> {
   const now = new Date().toISOString();
   const listing: MarketplaceListing = {

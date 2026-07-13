@@ -10,7 +10,8 @@ export type AgentName =
   | "sellerReputation"
   | "marketplace"
   | "insurance"
-  | "transfer";
+  | "transfer"
+  | "escrowValidation";
 
 /** Every agent returns this shape — structured JSON, never a free-form string. */
 export interface AgentResult<TOutput = unknown> {

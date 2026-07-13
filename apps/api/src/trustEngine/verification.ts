@@ -1,8 +1,17 @@
-import type { QrAgentOutput, Ticket } from "@fanpass/shared";
-import { VERIFICATION_STAGES } from "@fanpass/shared";
-import { runVerificationPipeline } from "@/ai/orchestrator";
+import type {
+  AgentResult,
+  QrAgentOutput,
+  SkillContext,
+  Ticket,
+  VerificationAgentResults,
+  VerificationStage,
+  WalletAddress,
+} from "@fanpass/shared";
+import { VERIFICATION_STAGES, hashTicketMetadata, hashVerificationReport, sha256HexToBytes32, ticketIdToTicketKey } from "@fanpass/shared";
+import { env } from "@/config/env";
+import { runPlanner } from "@/planner/planner";
 import { logAgentInvocation } from "@/repositories/agentLogRepository";
-import { createMockOwnershipCertificate } from "@/repositories/ownershipCertificateRepository";
+import { createOwnershipCertificate } from "@/repositories/ownershipCertificateRepository";
 import { updateTicket } from "@/repositories/ticketRepository";
 import { upsertTrustScore } from "@/repositories/trustScoreRepository";
 import {
@@ -11,6 +20,7 @@ import {
   recordStageResult,
 } from "@/repositories/verificationRepository";
 import { computeTrustScore } from "@/trustEngine/scoring";
+import { registerTicketOnChain } from "@/web3/ownershipRegistry";
 
 export interface TicketVerificationSubmission {
   ticket: Ticket;
@@ -20,8 +30,9 @@ export interface TicketVerificationSubmission {
 
 /**
  * The mandatory choke point for verification (docs/ARCHITECTURE.md §7): runs the AI Orchestrator, writes
- * verificationReports + trustScores, and updates tickets.status — the only place all three meet. On
- * pass, writes a mocked ownershipCertificates record (real OwnershipRegistry.sol mint is Phase 4).
+ * verificationReports + trustScores, and updates tickets.status. On pass, mints the real Ownership
+ * Certificate on-chain (VERIFIER_ROLE, the Trust Engine's own attestation — never a user-signed tx) and
+ * mirrors it locally. See docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md §14.
  */
 export async function verifyTicket(submission: TicketVerificationSubmission): Promise<void> {
   const { ticket, fileBuffer, mimetype } = submission;
@@ -37,7 +48,8 @@ export async function verifyTicket(submission: TicketVerificationSubmission): Pr
 }
 
 async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: string): Promise<void> {
-  const results = await runVerificationPipeline(
+  const context: SkillContext = { ticketId: ticket.ticketId, requestType: "verification", priorResults: {} };
+  const results = await runPlanner(
     {
       ticketId: ticket.ticketId,
       claimed: {
@@ -50,8 +62,9 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
       fileBuffer,
       mimetype,
     },
+    context,
     async (stage, result) => {
-      await recordStageResult(ticket.ticketId, stage, result);
+      await recordStageResult(ticket.ticketId, stage as VerificationStage, result as AgentResult<unknown>);
       await logAgentInvocation({
         agentName: result.agent,
         ticketId: ticket.ticketId,
@@ -63,7 +76,7 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
     }
   );
 
-  const scoring = computeTrustScore(results);
+  const scoring = computeTrustScore(results as VerificationAgentResults);
   await upsertTrustScore("ticket", ticket.ticketId, scoring.score, scoring.breakdown);
 
   const qrHash = (results.qr?.output as QrAgentOutput | undefined)?.qrHash ?? null;
@@ -73,7 +86,28 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
   });
 
   if (scoring.passed) {
-    await createMockOwnershipCertificate(ticket.ticketId, ticket.sellerAddress);
+    const ticketKey = ticketIdToTicketKey(ticket.ticketId);
+    const { tokenId, txHash } = await registerTicketOnChain({
+      ticketKey,
+      owner: ticket.sellerAddress as WalletAddress,
+      verificationHash: hashVerificationReport(results),
+      metadataHash: hashTicketMetadata({
+        eventName: ticket.eventName,
+        venue: ticket.venue,
+        eventDate: ticket.eventDate,
+        seatInfo: ticket.seatInfo,
+      }),
+      qrHash: qrHash ? sha256HexToBytes32(qrHash) : ticketKey,
+    });
+
+    await updateTicket(ticket.ticketId, { tokenId: tokenId.toString() });
+    await createOwnershipCertificate(
+      ticket.ticketId,
+      ticket.sellerAddress,
+      tokenId.toString(),
+      env.web3.ownershipRegistryAddress,
+      txHash
+    );
   }
 
   await finalizeVerificationReport(ticket.ticketId, scoring.flags);

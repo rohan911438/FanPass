@@ -1,42 +1,38 @@
-import type {
-  CreateListingInput,
-  ListingFilters,
-  ListingSummary,
-  MarketplaceListing,
-  Transaction,
-} from "@fanpass/shared";
+import type { ListingFilters, ListingSummary, PricingAgentOutput } from "@fanpass/shared";
 import { apiGet, apiPostJson } from "@/lib/api/client";
 
-function toQueryString(filters: ListingFilters): string {
+function toQueryString(filters: Record<string, string | number | undefined>): string {
   const params = new URLSearchParams();
-  if (filters.minPrice !== undefined) params.set("minPrice", String(filters.minPrice));
-  if (filters.maxPrice !== undefined) params.set("maxPrice", String(filters.maxPrice));
-  if (filters.minTrustScore !== undefined) params.set("minTrustScore", String(filters.minTrustScore));
-  if (filters.query) params.set("query", filters.query);
-  if (filters.sortBy) params.set("sortBy", filters.sortBy);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined) params.set(key, String(value));
+  }
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
 
+function listingFiltersToQueryString(filters: ListingFilters): string {
+  return toQueryString({
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minTrustScore: filters.minTrustScore,
+    query: filters.query,
+    sortBy: filters.sortBy,
+  });
+}
+
 export async function getListings(filters: ListingFilters = {}): Promise<ListingSummary[]> {
-  return apiGet<ListingSummary[]>(`/marketplace${toQueryString(filters)}`);
+  return apiGet<ListingSummary[]>(`/marketplace${listingFiltersToQueryString(filters)}`);
 }
 
 export async function getListingDetail(listingId: string): Promise<ListingSummary> {
   return apiGet<ListingSummary>(`/marketplace/${listingId}`);
 }
 
-export async function createListing(input: CreateListingInput): Promise<MarketplaceListing> {
-  return apiPostJson<MarketplaceListing>("/marketplace", input);
+export async function getPricingSuggestion(eventName: string, venue: string): Promise<PricingAgentOutput> {
+  return apiGet<PricingAgentOutput>(`/marketplace/pricing-suggestion${toQueryString({ eventName, venue })}`);
 }
 
-export async function buyListing(
-  listingId: string,
-  buyerAddress: string
-): Promise<{ listing: MarketplaceListing; transaction: Transaction }> {
-  return apiPostJson(`/marketplace/${listingId}/buy`, { buyerAddress });
-}
-
-export async function cancelListing(listingId: string, sellerAddress: string): Promise<MarketplaceListing> {
-  return apiPostJson<MarketplaceListing>(`/marketplace/${listingId}/cancel`, { sellerAddress });
+/** Mirrors a confirmed list/buy/cancel transaction (signed by the connected wallet) into the local store. */
+export async function syncListingTx(txHash: string): Promise<{ processedEvents: string[] }> {
+  return apiPostJson<{ processedEvents: string[] }>("/marketplace/sync", { txHash });
 }
