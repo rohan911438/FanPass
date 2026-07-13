@@ -4,7 +4,11 @@ import { env } from "@/config/env";
 import { publicClient } from "./client";
 
 const ADDRESS = env.web3.escrowMarketplaceAddress;
-const RECEIPT_RETRY_ATTEMPTS = 8;
+// This RPC serves eth_getTransactionReceipt inconsistently (load-balanced, no session affinity — see
+// web3/client.ts) even for a tx whose sender nonce has already advanced, i.e. genuinely mined. 24s of
+// retry budget wasn't enough in practice; 60s comfortably absorbs that lag without approaching
+// client.ts's much longer nonce-poll budget (which covers actual mining time, a different problem).
+const RECEIPT_RETRY_ATTEMPTS = 20;
 const RECEIPT_RETRY_DELAY_MS = 3_000;
 
 /**

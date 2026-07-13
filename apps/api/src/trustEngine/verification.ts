@@ -61,6 +61,8 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
       claimedSeller: ticket.sellerAddress,
       fileBuffer,
       mimetype,
+      eventName: ticket.eventName,
+      venue: ticket.venue,
     },
     context,
     async (stage, result) => {
@@ -80,12 +82,11 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
   await upsertTrustScore("ticket", ticket.ticketId, scoring.score, scoring.breakdown);
 
   const qrHash = (results.qr?.output as QrAgentOutput | undefined)?.qrHash ?? null;
-  await updateTicket(ticket.ticketId, {
-    qrHash,
-    status: scoring.passed ? "verified" : ticket.status,
-  });
 
   if (scoring.passed) {
+    // The mint happens before status flips to "verified" — a client polling status must never observe
+    // "verified" with tokenId still null, since "verified" means the Ownership Certificate genuinely
+    // exists on-chain, not just that the AI pipeline decided it should.
     const ticketKey = ticketIdToTicketKey(ticket.ticketId);
     const { tokenId, txHash } = await registerTicketOnChain({
       ticketKey,
@@ -100,7 +101,7 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
       qrHash: qrHash ? sha256HexToBytes32(qrHash) : ticketKey,
     });
 
-    await updateTicket(ticket.ticketId, { tokenId: tokenId.toString() });
+    await updateTicket(ticket.ticketId, { qrHash, tokenId: tokenId.toString(), status: "verified" });
     await createOwnershipCertificate(
       ticket.ticketId,
       ticket.sellerAddress,
@@ -108,6 +109,8 @@ async function runVerification(ticket: Ticket, fileBuffer: Buffer, mimetype: str
       env.web3.ownershipRegistryAddress,
       txHash
     );
+  } else {
+    await updateTicket(ticket.ticketId, { qrHash, status: ticket.status });
   }
 
   await finalizeVerificationReport(ticket.ticketId, scoring.flags);
