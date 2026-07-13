@@ -27,6 +27,18 @@ Ticket, Marketplace, Wallet.
 > would be over-building for a 4-page app). Everything else from v1 (Firestore, wallet-as-identity, no
 > Docker, mock-first agents) still holds.
 
+> **v3 changelog (Phase 4 blockchain design):** §5 below is superseded — **five contracts become three**.
+> `TrustRegistry` is dropped (its one job, anchoring a trust-checkpoint hash, is already covered by
+> `OwnershipRegistry.verificationHash`; a contract that exists only to re-anchor a hash of something
+> already anchored is duplicated storage). `Escrow` and `Marketplace` merge into one `EscrowMarketplace`
+> (they were never independently reusable — a listing has at most one active escrow, exactly like the
+> off-chain `marketplaceListings.escrow` field always modeled it). Full rationale, interfaces, storage
+> layout, sequence diagrams, security model, deployment plan, and the CCTP/x402/MCP designs live in
+> `docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md` — that document is authoritative for the blockchain layer;
+> treat §5/§8 here as the pre-Phase-4 sketch they were written as. Also note: Phase 1–3 already run on a
+> local JSON file store (`apps/api/src/config/localStore.ts`), not Firestore — every "Firestore"/"Firebase"
+> reference below predates that swap and should be read as "the off-chain store."
+
 ---
 
 ## 1. Monorepo & Folder Architecture
@@ -237,23 +249,23 @@ rather than a separate top-level collection, since a listing has at most one act
 
 ## 5. Smart Contract Architecture (Injective EVM Testnet)
 
-Five independent contracts, each behind its own interface in `contracts/interfaces/`. A contract only ever
-depends on another contract's **interface**, never its implementation — that's what lets any one of them be
-replaced later (or made upgradeable via a proxy) without touching the others. Kept minimal and gas-efficient;
-state changes emit events liberally since the backend indexes off those events into Firestore rather than
-polling.
+**Superseded by `docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md`** — see the v3 changelog above. Three
+contracts, not five: `OwnershipRegistry`, `EscrowMarketplace`, `AttendanceRegistry`. Each still sits
+behind its own interface in `contracts/interfaces/`, and a contract only ever depends on another
+contract's **interface**, never its implementation — that's what lets any one of them be replaced later
+without touching the others. Kept minimal and gas-efficient; state changes emit events liberally since the
+backend indexes off those events into the off-chain store rather than polling.
 
 | Contract | Responsibility | Notes |
 |---|---|---|
-| **OwnershipRegistry** | mints & tracks the Ownership Certificate (ERC-721) per ticket; single source of truth for "who owns this ticket on-chain" | `MINTER_ROLE` = backend signer, granted only after Trust Engine verification passes |
-| **Escrow** | locks buyer's USDC + seller's certificate until a purchase completes; refund path; dispute flag | called by Marketplace, never called directly by the frontend |
-| **Marketplace** | listing creation/cancellation/purchase-initiation; orchestrates Escrow + OwnershipRegistry for a purchase | the only contract users' transactions target directly |
-| **TrustRegistry** | anchors a hash of key trust checkpoints (verified, listed, sold, checked-in) on-chain for auditability | does **not** store the scoring model — that stays off-chain, only checkpoints are anchored |
-| **AttendanceRegistry** | marks a ticket as attended at check-in; emits the event that triggers badge/memory-card generation | write access gated to a venue-check-in signer role |
+| **OwnershipRegistry** | mints & tracks the Ownership Certificate (ERC-721) per ticket; single source of truth for "who owns this ticket on-chain"; anchors a `verificationHash` + `metadataHash` per ticket | `VERIFIER_ROLE` = Trust Engine backend signer, granted only after verification passes; transfers restricted to `MARKETPLACE_ROLE`/`ATTENDANCE_ROLE` callers only |
+| **EscrowMarketplace** | listing creation/cancellation/expiry; locks buyer's USDC until a purchase completes; releases funds + ownership together; refund + dispute path | the only contract users' purchase transactions target directly; merges what used to be two separate `Escrow`/`Marketplace` contracts |
+| **AttendanceRegistry** | marks a ticket as attended at check-in; emits the event that triggers badge/memory-card generation later | write access gated to a venue-check-in signer role; deliberately minimal — badges/memory cards are future contracts that subscribe to its events |
 
 Deployed straight to Injective EVM Testnet RPC via Hardhat scripts — no local devnet container. Non-upgradeable
-for the hackathon build (proxy/UUPS upgradeability is a deliberate Phase-4+ stretch, not MVP — adding it now
-would be over-building before there's a v2 to migrate to).
+for the hackathon build (proxy/UUPS upgradeability is a deliberate later stretch, not MVP — adding it now
+would be over-building before there's a v2 to migrate to). Full storage layout, interfaces, events, security
+model, sequence diagrams, and deployment plan: `docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md`.
 
 ---
 

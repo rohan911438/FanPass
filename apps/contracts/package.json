@@ -1,0 +1,24 @@
+{
+  "name": "@fanpass/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FanPass Trust Layer — OwnershipRegistry, EscrowMarketplace, AttendanceRegistry (Injective EVM Testnet).",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy-all.ts --network hardhat",
+    "deploy:testnet": "hardhat run scripts/deploy-all.ts --network injectiveTestnet",
+    "verify:testnet": "hardhat run scripts/verify.ts --network injectiveTestnet"
+  },
+  "dependencies": {
+    "@fanpass/shared": "*"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "@types/node": "^20.14.11",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.15",
+    "typescript": "^5.5.4"
+  }
+}
