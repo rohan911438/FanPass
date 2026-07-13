@@ -223,7 +223,7 @@ async function main() {
   const finalListing = await api(`/marketplace/${listingId}`);
   console.log("  final listing status in store:", finalListing.status);
 
-  const finalTicket = await api(`/tickets/${created.ticketId}`);
+  const finalTicket = await api(`/tickets/${ticket.ticketId}`);
   console.log("  final ticket status in store:", finalTicket.status);
 
   console.log("\n=== SMOKE TEST COMPLETE ===");
