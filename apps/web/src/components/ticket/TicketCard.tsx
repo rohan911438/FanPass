@@ -15,7 +15,7 @@ const STATUS_LABEL: Record<Ticket["status"], string> = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 interface TicketCardProps {
