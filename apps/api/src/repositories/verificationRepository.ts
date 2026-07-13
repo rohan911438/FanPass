@@ -1,6 +1,5 @@
-import { FieldValue } from "firebase-admin/firestore";
 import type { AgentResult, VerificationReport, VerificationStage } from "@fanpass/shared";
-import { getDb } from "@/config/firebaseAdmin";
+import { FieldValue, getDb } from "@/config/localStore";
 
 const COLLECTION = "verificationReports";
 

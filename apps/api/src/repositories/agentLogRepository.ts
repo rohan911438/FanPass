@@ -1,5 +1,5 @@
 import type { AgentName } from "@fanpass/shared";
-import { getDb } from "@/config/firebaseAdmin";
+import { getDb } from "@/config/localStore";
 
 const COLLECTION = "agentLogs";
 

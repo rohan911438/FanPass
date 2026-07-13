@@ -14,10 +14,8 @@ build/
 .env.local
 .env.*.local
 
-# firebase
-.firebase/
-firebase-debug.log
-*-service-account*.json
+# local data store (apps/api/src/config/localStore.ts) — JSON documents + uploaded ticket files
+apps/api/data/
 
 # hardhat
 apps/contracts/cache/

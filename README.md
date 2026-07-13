@@ -22,8 +22,9 @@ npm run dev:web    # http://localhost:3000
 npm run dev:api    # http://localhost:4000
 ```
 
-No Docker. Database is Firebase (Firestore + Storage). Identity is a connected EVM wallet address on the
-Injective EVM Testnet — no login, no auth system.
+No Docker. No external database to provision — `apps/api` persists to local JSON files + uploaded files
+under `apps/api/data/` (see `src/config/localStore.ts`), created automatically on first run. Identity is a
+connected EVM wallet address on the Injective EVM Testnet — no login, no auth system.
 
 ## Status
 
@@ -44,6 +45,9 @@ recomputes both parties' `trustScores/user_{address}` via a real (stats-driven) 
 `/wallet` aggregates a connected address's real tickets, certificates, transactions, and listings in one
 call; Attendance Badges and Memory Cards render the real (currently empty) data shape ahead of Phase 4/6.
 
-Both phases require a real Firebase project (`apps/api/.env`, see `.env.example`) to exercise against
-Firestore/Storage. See §11 of the architecture doc for the full phase plan — Phase 4 (chain integration)
-is next.
+Persistence note: both phases were originally built against Firestore/Storage; `apps/api/src/config/
+localStore.ts` now backs the same `repositories/*` call signatures with local JSON files + local file
+storage instead, so nothing above the repository layer changed and no external project setup is needed —
+just `npm install && npm run dev:api`. Swap that one module for a real database later without touching
+anything else. See §11 of the architecture doc for the full phase plan — Phase 4 (chain integration) is
+next.

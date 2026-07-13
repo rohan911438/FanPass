@@ -1,4 +1,4 @@
-import { getBucket } from "@/config/firebaseAdmin";
+import { getBucket } from "@/config/localStore";
 
 const EXTENSION_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
