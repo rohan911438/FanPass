@@ -1,0 +1,12 @@
+{
+  "network": "injectiveTestnet",
+  "chainId": 1439,
+  "usdc": "0x72803FA50A1deb16AEc66677F81C16bfc2708da8",
+  "ownershipRegistry": "0xa05aaa4931706010A1e9089f8E12B9A5c1cA400d",
+  "admin": "0xF95Aa9b69C9843827FEfbc176b1d064d1E43069f",
+  "deployedAt": "2026-07-13T16:42:04.025Z",
+  "escrowMarketplace": "0x69fF99DeF5B4c023f796b3a676a6B663c8307990",
+  "attendanceRegistry": "0x0637ec0842009EA4fa3b900576d70D3423994175",
+  "verifier": "0xF95Aa9b69C9843827FEfbc176b1d064d1E43069f",
+  "venueVerifier": "0xF95Aa9b69C9843827FEfbc176b1d064d1E43069f"
+}

@@ -10,9 +10,27 @@ Architecture, schema, roadmap: see [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.
 ```
 apps/web         Next.js frontend (Landing, Verify Ticket, Marketplace, Wallet)
 apps/api         Express + TypeScript backend (Trust Engine, AI orchestrator, Firestore repositories)
-apps/contracts   Solidity contracts (Hardhat) — scaffolded in Phase 4
+apps/contracts   Solidity contracts (Hardhat) — OwnershipRegistry/EscrowMarketplace/AttendanceRegistry,
+                 deployed to Injective EVM Testnet, see addresses below
 packages/shared  Types + Zod schemas shared between web and api
 ```
+
+## Deployed contracts (Injective EVM Testnet)
+
+Chain id `1439`, RPC `https://k8s.testnet.json-rpc.injective.network/`. Full design:
+[`docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md`](./docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md). Deployment record:
+[`apps/contracts/deployments/injectiveTestnet.json`](./apps/contracts/deployments/injectiveTestnet.json).
+
+| Contract | Address |
+|---|---|
+| OwnershipRegistry | `0xa05aaa4931706010A1e9089f8E12B9A5c1cA400d` |
+| EscrowMarketplace | `0x69fF99DeF5B4c023f796b3a676a6B663c8307990` |
+| AttendanceRegistry | `0x0637ec0842009EA4fa3b900576d70D3423994175` |
+| MockUSDC (testnet only) | `0x72803FA50A1deb16AEc66677F81C16bfc2708da8` |
+
+All roles (`VERIFIER_ROLE`, `VENUE_VERIFIER_ROLE`, plus each contract's cross-grant on `OwnershipRegistry`)
+are held by the deployer wallet for now — see §9.1 of the design doc for how to split them onto separate
+signers later without redeploying.
 
 ## Getting started
 
@@ -49,5 +67,11 @@ Persistence note: both phases were originally built against Firestore/Storage; `
 localStore.ts` now backs the same `repositories/*` call signatures with local JSON files + local file
 storage instead, so nothing above the repository layer changed and no external project setup is needed —
 just `npm install && npm run dev:api`. Swap that one module for a real database later without touching
-anything else. See §11 of the architecture doc for the full phase plan — Phase 4 (chain integration) is
-next.
+anything else.
+
+Phase 4 in progress: the three-contract trust layer (`OwnershipRegistry`, `EscrowMarketplace`,
+`AttendanceRegistry` — see the design doc and deployed addresses above) is written, unit/integration/
+security-tested (51 passing tests, including a reentrancy-attack test), and **deployed live** to Injective
+EVM Testnet. `apps/api` doesn't call these yet — `trustEngine/verification.ts` and `trustEngine/
+marketplace.ts` still write directly to the local store; wiring `apps/api/src/web3/*` + an event indexer
+per §14 of the design doc is the remaining step. See §11 of the architecture doc for the full phase plan.
