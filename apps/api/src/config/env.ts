@@ -23,4 +23,10 @@ export const env = {
     paymentReceiverAddress: (process.env.X402_PAYMENT_RECEIVER_ADDRESS ??
       "0x0000000000000000000000000000000000000000") as `0x${string}`,
   },
+  cctp: {
+    // Off by default — the simulated provider (deterministic, no external account needed) is the default,
+    // matching this repo's existing "mocked-but-deterministic now, real vendor later" convention.
+    live: process.env.CCTP_LIVE === "true",
+    injectiveDomain: process.env.CCTP_INJECTIVE_DOMAIN ? Number(process.env.CCTP_INJECTIVE_DOMAIN) : null,
+  },
 } as const;

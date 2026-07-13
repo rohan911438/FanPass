@@ -6,4 +6,5 @@ export * from "./schemas/common";
 export * from "./schemas/ticket";
 export * from "./schemas/listing";
 export * from "./constants/chain";
+export * from "./constants/cctp";
 export * from "./contracts";

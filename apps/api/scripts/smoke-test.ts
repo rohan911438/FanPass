@@ -17,7 +17,7 @@ import {
 import { env } from "@/config/env";
 import { injectiveEvmTestnet, publicClient, GAS_PRICE, GAS_LIMIT, waitForNonceToPass } from "@/web3/client";
 
-const API_BASE = "http://localhost:4000";
+const API_BASE = "http://localhost:4000/api/v1";
 const USDC_DECIMALS = 6;
 
 async function api(path: string, init?: RequestInit) {

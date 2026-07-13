@@ -3,19 +3,23 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Ban, CheckCircle2, Repeat, ShoppingCart } from "lucide-react";
+import { Ban, CheckCircle2, Globe2, Repeat, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CrossChainPurchaseStepper } from "@/components/marketplace/CrossChainPurchaseStepper";
 import { TrustScoreCard } from "@/components/ticket/TrustScoreCard";
 import { WalletConnectButton } from "@/components/shared/WalletConnectButton";
 import { useBuyTicket } from "@/hooks/useBuyTicket";
 import { useCancelListing } from "@/hooks/useCancelListing";
+import type { CctpSourceChain } from "@/hooks/useCrossChainBuy";
 import { useVerificationProgress } from "@/hooks/useVerificationProgress";
 import { useWallet } from "@/hooks/useWallet";
 import { getListingDetail } from "@/lib/api/listings";
 import { queryKeys } from "@/lib/query/queryClient";
+
+const CROSS_CHAIN_OPTIONS: CctpSourceChain[] = ["ethereum", "base", "arbitrum"];
 
 const REPUTATION_LABEL: Record<string, string> = {
   new: "New Seller",
@@ -42,6 +46,7 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
   const { address, isConnected } = useWallet();
   const queryClient = useQueryClient();
   const [justBought, setJustBought] = useState(false);
+  const [crossChainSource, setCrossChainSource] = useState<CctpSourceChain | null>(null);
 
   const { data: summary, isLoading } = useQuery({
     queryKey: queryKeys.listingDetail(listingId),
@@ -157,11 +162,40 @@ export function ListingDetail({ listingId }: ListingDetailProps) {
               <p className="text-xs">Connect your wallet to buy this ticket.</p>
               <WalletConnectButton />
             </div>
+          ) : crossChainSource && address ? (
+            <CrossChainPurchaseStepper
+              listingId={listingId}
+              askPrice={listing.askPrice}
+              buyerAddress={address as `0x${string}`}
+              sourceChain={crossChainSource}
+              onDone={() => {
+                setJustBought(true);
+                queryClient.invalidateQueries({ queryKey: queryKeys.listingDetail(listingId) });
+              }}
+            />
           ) : (
-            <Button disabled={!canBuy || buyMutation.isPending} onClick={handleBuy} className="self-start gap-1.5 px-6">
-              <ShoppingCart className="size-4" />
-              {buyMutation.isPending ? "Confirm in wallet…" : `Buy for ${listing.askPrice} USDC`}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button disabled={!canBuy || buyMutation.isPending} onClick={handleBuy} className="self-start gap-1.5 px-6">
+                <ShoppingCart className="size-4" />
+                {buyMutation.isPending ? "Confirm in wallet…" : `Buy for ${listing.askPrice} USDC`}
+              </Button>
+              {canBuy && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <Globe2 className="size-3.5" />
+                  <span>Or pay with USDC from</span>
+                  {CROSS_CHAIN_OPTIONS.map((chain) => (
+                    <button
+                      key={chain}
+                      type="button"
+                      onClick={() => setCrossChainSource(chain)}
+                      className="capitalize underline underline-offset-2 hover:text-foreground"
+                    >
+                      {chain}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

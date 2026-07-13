@@ -22,4 +22,5 @@ export const queryKeys = {
   listingDetail: (id: string) => ["listingDetail", id] as const,
   trustScore: (entityType: "ticket" | "user", id: string) => ["trustScore", entityType, id] as const,
   wallet: (address: string) => ["wallet", address] as const,
+  crossChainIntent: (listingId: string, intentId: string) => ["crossChainIntent", listingId, intentId] as const,
 };
