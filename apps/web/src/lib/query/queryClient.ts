@@ -17,6 +17,7 @@ export function makeQueryClient() {
  */
 export const queryKeys = {
   ticket: (id: string) => ["ticket", id] as const,
+  ticketVerification: (id: string) => ["ticketVerification", id] as const,
   listings: (filters?: Record<string, unknown>) => ["listings", filters] as const,
   trustScore: (entityType: "ticket" | "user", id: string) => ["trustScore", entityType, id] as const,
   wallet: (address: string) => ["wallet", address] as const,

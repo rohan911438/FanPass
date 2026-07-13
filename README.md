@@ -28,6 +28,12 @@ Injective EVM Testnet — no login, no auth system.
 ## Status
 
 Phase 1 complete: monorepo scaffold, design system shell, wallet connect (Injective EVM Testnet), Landing
-page, nav/shell, and a working Express API skeleton. All four routes render, both dev servers verified
-running. See §11 of the architecture doc for the full phase plan — Phase 2 (verification core) is next.
+page, nav/shell, and a working Express API skeleton.
+
+Phase 2 complete: `/verify` is real end to end — ticket upload (multipart → Firebase Storage), a 6-agent
+AI Orchestrator (OCR/Metadata/Fraud mocked-but-deterministic, QR/Ownership real against Firestore, Pricing
+a flat-comps placeholder), the Trust Engine writing `verificationReports`/`trustScores`/`agentLogs`/mocked
+`ownershipCertificates`, a live-polling `VerificationStepper`, and an expandable `TrustScoreCard`. Requires
+a real Firebase project (`apps/api/.env`, see `.env.example`) to exercise against Firestore/Storage. See
+§11 of the architecture doc for the full phase plan — Phase 3 (marketplace & wallet) is next.
 "# FanPass" 

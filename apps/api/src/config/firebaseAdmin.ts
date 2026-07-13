@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
-import { getStorage, type Storage } from "firebase-admin/storage";
+import { getStorage } from "firebase-admin/storage";
+import type { Bucket } from "@google-cloud/storage";
 import { env } from "./env";
 
 /**
@@ -25,6 +26,7 @@ function getApp(): App {
       clientEmail: env.firebase.clientEmail,
       privateKey: env.firebase.privateKey,
     }),
+    storageBucket: env.firebase.storageBucket,
   });
   return app;
 }
@@ -33,6 +35,6 @@ export function getDb(): Firestore {
   return getFirestore(getApp());
 }
 
-export function getBucket(): Storage {
-  return getStorage(getApp());
+export function getBucket(): Bucket {
+  return getStorage(getApp()).bucket();
 }
