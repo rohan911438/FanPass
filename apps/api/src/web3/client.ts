@@ -1,7 +1,7 @@
 import { createPublicClient, createWalletClient, http, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { defineChain } from "viem";
-import { INJECTIVE_EVM_TESTNET } from "@fanpass/shared";
+import { INJECTIVE_EVM_TESTNET, INJECTIVE_TESTNET_GAS_LIMIT, INJECTIVE_TESTNET_GAS_PRICE } from "@fanpass/shared";
 import { env } from "@/config/env";
 
 /**
@@ -24,8 +24,8 @@ export const injectiveEvmTestnet = defineChain({
 
 const CALL_TIMEOUT_MS = 20_000;
 
-export const GAS_PRICE = 200_000_000n;
-export const GAS_LIMIT = 6_000_000n;
+export const GAS_PRICE = INJECTIVE_TESTNET_GAS_PRICE;
+export const GAS_LIMIT = INJECTIVE_TESTNET_GAS_LIMIT;
 
 const transport = http(env.web3.rpcUrl, { timeout: CALL_TIMEOUT_MS, retryCount: 2, retryDelay: 1000 });
 

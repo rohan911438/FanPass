@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { readContract, waitForTransactionReceipt, writeContract } from "wagmi/actions";
+import { readContract, writeContract } from "wagmi/actions";
 import { parseUnits } from "viem";
+import { INJECTIVE_TESTNET_GAS_LIMIT, INJECTIVE_TESTNET_GAS_PRICE } from "@fanpass/shared";
 import { syncListingTx } from "@/lib/api/listings";
+import { getPendingNonce, waitForNonceToPass } from "@/lib/web3/confirmTx";
 import { wagmiConfig } from "@/lib/web3/config";
 import { escrowMarketplaceContract, mockUsdcContract, USDC_DECIMALS } from "@/lib/web3/contracts";
 import { queryKeys } from "@/lib/query/queryClient";
@@ -34,30 +36,39 @@ export function useBuyTicket(walletAddress: string | undefined) {
 
       if (allowance < priceBaseUnits) {
         toast.info("Step 1: Approve USDC spending…");
+        const priorNonce = await getPendingNonce(buyerAddress);
         const approveHash = await writeContract(wagmiConfig, {
           ...mockUsdcContract,
           functionName: "approve",
           args: [escrowMarketplaceContract.address, priceBaseUnits],
+          gasPrice: INJECTIVE_TESTNET_GAS_PRICE,
+          gas: INJECTIVE_TESTNET_GAS_LIMIT,
         });
-        await waitForTransactionReceipt(wagmiConfig, { hash: approveHash });
+        await waitForNonceToPass(buyerAddress, priorNonce);
       }
 
       toast.info("Step 2: Lock funds in escrow…");
+      const buyPriorNonce = await getPendingNonce(buyerAddress);
       const buyHash = await writeContract(wagmiConfig, {
         ...escrowMarketplaceContract,
         functionName: "buy",
         args: [BigInt(listingId), priceBaseUnits],
+        gasPrice: INJECTIVE_TESTNET_GAS_PRICE,
+        gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
-      await waitForTransactionReceipt(wagmiConfig, { hash: buyHash });
+      await waitForNonceToPass(buyerAddress, buyPriorNonce);
       await syncListingTx(buyHash);
 
       toast.info("Step 3: Finalize purchase…");
+      const releasePriorNonce = await getPendingNonce(buyerAddress);
       const releaseHash = await writeContract(wagmiConfig, {
         ...escrowMarketplaceContract,
         functionName: "releaseEscrow",
         args: [BigInt(listingId)],
+        gasPrice: INJECTIVE_TESTNET_GAS_PRICE,
+        gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
-      await waitForTransactionReceipt(wagmiConfig, { hash: releaseHash });
+      await waitForNonceToPass(buyerAddress, releasePriorNonce);
       return syncListingTx(releaseHash);
     },
     onSuccess: () => {
