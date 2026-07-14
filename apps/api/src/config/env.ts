@@ -5,6 +5,10 @@ export const env = {
   port: Number(process.env.PORT ?? 4000),
   nodeEnv: process.env.NODE_ENV ?? "development",
   webOrigin: process.env.WEB_ORIGIN ?? "http://localhost:3000",
+  // The externally-reachable base URL for this API itself — used to build signed storage URLs
+  // (uploaded ticket images). Must be set to the real deployed origin in production; defaults to
+  // localhost only for local dev, where it's actually correct.
+  publicUrl: process.env.API_PUBLIC_URL ?? `http://localhost:${Number(process.env.PORT ?? 4000)}`,
   web3: {
     rpcUrl: process.env.INJECTIVE_EVM_TESTNET_RPC ?? INJECTIVE_EVM_TESTNET.rpcUrl,
     chainId: INJECTIVE_EVM_TESTNET.id,

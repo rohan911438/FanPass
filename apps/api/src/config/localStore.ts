@@ -209,7 +209,7 @@ class LocalBucket {
         writeFileSync(absPath, buffer);
       },
       async getSignedUrl() {
-        return [`http://localhost:${env.port}/storage/${filePath}`];
+        return [`${env.publicUrl}/storage/${filePath}`];
       },
     };
   }

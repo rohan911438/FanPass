@@ -1,0 +1,103 @@
+1
+00:00:00,000 --> 00:00:05,000
+Buying a resale ticket has always meant one question:
+
+2
+00:00:05,000 --> 00:00:09,000
+"Is this even real?"
+
+3
+00:00:09,000 --> 00:00:14,000
+FanPass answers that question before any money moves.
+
+4
+00:00:14,000 --> 00:00:20,000
+Here, a seller is uploading a FIFA World Cup ticket, straight from their phone.
+
+5
+00:00:20,000 --> 00:00:27,000
+The moment it lands, FanPass's AI Trust Engine takes over — six specialized agents working together.
+
+6
+00:00:27,000 --> 00:00:32,000
+One reads the ticket's QR code.
+
+7
+00:00:32,000 --> 00:00:37,000
+Another cross-checks the event, venue, and date against official fixtures.
+
+8
+00:00:37,000 --> 00:00:43,000
+A third scans for signs of tampering or a reused screenshot.
+
+9
+00:00:43,000 --> 00:00:50,000
+Watch the Trust Score build in real time, climbing toward a hundred...
+
+10
+00:00:50,000 --> 00:00:55,000
+...each check lighting up green as it clears.
+
+11
+00:00:55,000 --> 00:01:01,000
+This isn't a black box — every signal is shown, so a buyer can see exactly why a ticket is trusted.
+
+12
+00:01:01,000 --> 00:01:08,000
+Once verified, the ticket becomes more than a listing — it becomes an on-chain Ownership Certificate.
+
+13
+00:01:08,000 --> 00:01:15,000
+One signature from the seller's wallet, and it's live on the marketplace — priced, ranked, and ready.
+
+14
+00:01:15,000 --> 00:01:19,000
+Now, from the buyer's side.
+
+15
+00:01:19,000 --> 00:01:26,000
+Here's the marketplace — every listing already carrying its Trust Score and seller reputation...
+
+16
+00:01:26,000 --> 00:01:31,000
+...sorted so the safest deals rise to the top.
+
+17
+00:01:31,000 --> 00:01:38,000
+This one — a Group Stage match at SoFi Stadium — eighty-four out of a hundred.
+
+18
+00:01:38,000 --> 00:01:43,000
+Fair price, verified seller, zero red flags.
+
+19
+00:01:43,000 --> 00:01:48,000
+The buyer connects their wallet, and taps Buy.
+
+20
+00:01:48,000 --> 00:01:54,000
+From here, FanPass never touches the money.
+
+21
+00:01:54,000 --> 00:02:01,000
+The buyer's own wallet signs every step — approving the payment, locking funds in escrow on-chain...
+
+22
+00:02:01,000 --> 00:02:05,000
+...and finally releasing them to the seller.
+
+23
+00:02:05,000 --> 00:02:11,000
+Three signatures. Full transparency. No middleman holding funds in between.
+
+24
+00:02:11,000 --> 00:02:17,000
+And just like that, the certificate transfers.
+
+25
+00:02:17,000 --> 00:02:22,000
+The ticket is now provably, verifiably theirs.
+
+26
+00:02:22,000 --> 00:02:30,000
+That's FanPass — turning ticket resale from a gamble... into a guarantee.
