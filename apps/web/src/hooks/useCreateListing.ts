@@ -33,16 +33,18 @@ export function useCreateListing() {
         gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
       await waitForNonceToPass(address, priorNonce);
-      await syncListingTx(hash);
 
       // Read the listing back from contract state rather than parsing the tx receipt's logs — this
-      // RPC's by-hash tx/receipt lookups are unreliable (see lib/web3/confirmTx.ts) even once mined.
-      const listingId = await readContract(wagmiConfig, {
+      // RPC's by-hash tx/receipt lookups (and eth_getLogs) are unreliable (see lib/web3/confirmTx.ts and
+      // apps/api/src/trustEngine/marketplace.ts) even once mined.
+      const listingIdRaw = await readContract(wagmiConfig, {
         ...escrowMarketplaceContract,
         functionName: "listingOf",
         args: [tokenId],
       });
-      return { listingId: listingId ? listingId.toString() : null };
+      const listingId = listingIdRaw ? listingIdRaw.toString() : null;
+      if (listingId) await syncListingTx(hash, listingId);
+      return { listingId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.listings() });

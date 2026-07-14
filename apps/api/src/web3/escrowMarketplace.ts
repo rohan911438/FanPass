@@ -1,4 +1,4 @@
-import { parseEventLogs, type TransactionReceipt } from "viem";
+import type { TransactionReceipt } from "viem";
 import { escrowMarketplaceAbi } from "@fanpass/shared";
 import { env } from "@/config/env";
 import { publicClient } from "./client";
@@ -29,16 +29,6 @@ export async function getReceiptWithRetry(txHash: `0x${string}`): Promise<Transa
     }
   }
   throw new Error(`No receipt for ${txHash} after ${RECEIPT_RETRY_ATTEMPTS} attempts: ${(lastError as Error)?.message}`);
-}
-
-export type MarketplaceEvent = ReturnType<typeof parseEventLogs<typeof escrowMarketplaceAbi>>[number];
-
-/** Decodes whichever EscrowMarketplace events are present in a receipt's logs — a tx can emit several. */
-export function decodeMarketplaceEvents(receipt: TransactionReceipt): MarketplaceEvent[] {
-  return parseEventLogs({
-    abi: escrowMarketplaceAbi,
-    logs: receipt.logs.filter((log) => log.address.toLowerCase() === ADDRESS.toLowerCase()),
-  });
 }
 
 export async function getListingOnChain(listingId: bigint) {

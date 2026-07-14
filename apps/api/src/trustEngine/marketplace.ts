@@ -1,4 +1,4 @@
-import { formatUnits } from "viem";
+import { formatUnits, zeroAddress } from "viem";
 import type { WalletAddress } from "@fanpass/shared";
 import { runPricingAgent } from "@/ai/agents/pricing.agent";
 import { runSellerReputationAgent } from "@/ai/agents/sellerReputation.agent";
@@ -19,9 +19,13 @@ import {
 } from "@/repositories/transactionRepository";
 import { upsertTrustScore } from "@/repositories/trustScoreRepository";
 import { incrementUserStats, updateUser } from "@/repositories/userRepository";
-import { decodeMarketplaceEvents, getReceiptWithRetry, type MarketplaceEvent } from "@/web3/escrowMarketplace";
+import { getEscrowOnChain, getListingOnChain } from "@/web3/escrowMarketplace";
 
 const USDC_DECIMALS = 6;
+
+// Mirrors IEscrowMarketplace.sol's enums exactly — see apps/contracts/contracts/interfaces/IEscrowMarketplace.sol.
+const LISTING_STATUS = { NONE: 0, ACTIVE: 1, PENDING_ESCROW: 2, SOLD: 3, CANCELLED: 4, EXPIRED: 5 } as const;
+const ESCROW_STATE = { NONE: 0, FUNDED: 1, RELEASED: 2, REFUNDED: 3, DISPUTED: 4 } as const;
 
 function toDisplayAmount(baseUnits: bigint): number {
   return Number(formatUnits(baseUnits, USDC_DECIMALS));
@@ -29,45 +33,70 @@ function toDisplayAmount(baseUnits: bigint): number {
 
 /**
  * Listing/buy/cancel are now real transactions signed by the connected wallet (see
- * docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md §14) — this is the "backend listens to smart contract events
- * and updates the off-chain store" half of that flow, triggered on-demand by the frontend right after
- * its own transaction confirms, rather than a continuously-running indexer. Every handler checks current
- * local state before mutating, so re-syncing the same tx twice is a no-op, not a double-count.
+ * docs/PHASE_4_BLOCKCHAIN_ARCHITECTURE.md §14) — this reconciles the off-chain store against current
+ * on-chain listing/escrow state for a given listingId, triggered on-demand by the frontend right after
+ * its own transaction confirms, rather than a continuously-running indexer.
+ *
+ * Deliberately NOT event-log-based: eth_getTransactionReceipt and eth_getLogs are both unreliable on the
+ * Injective Testnet RPC (verified live 2026-07-14 — a genuinely-mined, nonce-confirmed tx's receipt was
+ * unfindable by hash after 40 retries over 120s, and eth_getLogs returned zero results even for the exact
+ * block range containing it). listingOf/getListing/getEscrow view calls are the one thing this RPC serves
+ * consistently, so reconciliation reads current state directly instead of decoding what one specific tx
+ * changed. Every handler below checks current local state before mutating, so re-syncing the same
+ * listingId twice — or syncing after several state transitions happened between two sync calls — is a
+ * no-op / catch-up, not a double-count.
  */
-export async function syncFromChainTx(txHash: `0x${string}`): Promise<{ processedEvents: string[] }> {
-  const receipt = await getReceiptWithRetry(txHash);
-  const events = decodeMarketplaceEvents(receipt);
-  if (events.length === 0) {
-    throw new ApiError(400, "This transaction didn't emit any recognized EscrowMarketplace event.");
+export async function syncFromChainTx(txHash: `0x${string}`, listingId: string): Promise<{ processedEvents: string[] }> {
+  const listing = await getListingOnChain(BigInt(listingId));
+  if (listing.seller === zeroAddress) {
+    throw new ApiError(400, `No listing found on-chain for listingId ${listingId}`);
   }
 
   const processedEvents: string[] = [];
-  for (const event of events) {
-    await handleEvent(event, txHash);
-    processedEvents.push(event.eventName);
-  }
-  return { processedEvents };
-}
 
-async function handleEvent(event: MarketplaceEvent, txHash: `0x${string}`): Promise<void> {
-  switch (event.eventName) {
-    case "ListingCreated":
-      return handleListingCreated(event.args);
-    case "FundsLocked":
-      return handleFundsLocked(event.args, txHash);
-    case "TicketPurchased":
-      return handleTicketPurchased(event.args, txHash);
-    case "ListingCancelled":
-      return handleListingCancelled(event.args);
-    case "ListingExpired":
-      return handleListingExpired(event.args);
-    case "BuyerRefunded":
-      return handleBuyerRefunded(event.args);
-    default:
-      // FundsReleased always arrives alongside TicketPurchased (handled there); DisputeRaised/
-      // DisputeResolved have no frontend surface yet (Phase 5+) — nothing to sync for either.
-      return;
+  if (!(await getListingById(listingId))) {
+    await handleListingCreated({
+      listingId: BigInt(listingId),
+      tokenId: listing.tokenId,
+      seller: listing.seller,
+      price: listing.price,
+      expiresAt: listing.expiresAt,
+    });
+    processedEvents.push("ListingCreated");
   }
+
+  if (listing.status === LISTING_STATUS.PENDING_ESCROW || listing.status === LISTING_STATUS.SOLD) {
+    const escrow = await getEscrowOnChain(BigInt(listingId));
+    if (escrow.buyer !== zeroAddress) {
+      await handleFundsLocked({ listingId: BigInt(listingId), buyer: escrow.buyer, amount: escrow.amount }, txHash);
+      processedEvents.push("FundsLocked");
+    }
+    if (listing.status === LISTING_STATUS.SOLD && escrow.state === ESCROW_STATE.RELEASED) {
+      await handleTicketPurchased({ listingId: BigInt(listingId), buyer: escrow.buyer, seller: listing.seller }, txHash);
+      processedEvents.push("TicketPurchased");
+    }
+  }
+
+  if (listing.status === LISTING_STATUS.CANCELLED) {
+    const escrow = await getEscrowOnChain(BigInt(listingId));
+    if (escrow.buyer !== zeroAddress && escrow.state === ESCROW_STATE.REFUNDED) {
+      await handleBuyerRefunded({ listingId: BigInt(listingId) });
+      processedEvents.push("BuyerRefunded");
+    } else {
+      await handleListingCancelled({ listingId: BigInt(listingId) });
+      processedEvents.push("ListingCancelled");
+    }
+  }
+
+  if (listing.status === LISTING_STATUS.EXPIRED) {
+    await handleListingExpired({ listingId: BigInt(listingId) });
+    processedEvents.push("ListingExpired");
+  }
+
+  // An empty list here is a legitimate, harmless outcome (e.g. the frontend re-syncing a listing whose
+  // on-chain state hasn't changed since the last sync) — not an error condition, unlike an unknown
+  // listingId above.
+  return { processedEvents };
 }
 
 async function handleListingCreated(args: { listingId: bigint; tokenId: bigint; seller: string; price: bigint; expiresAt: bigint }): Promise<void> {

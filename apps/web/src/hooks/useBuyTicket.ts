@@ -57,7 +57,7 @@ export function useBuyTicket(walletAddress: string | undefined) {
         gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
       await waitForNonceToPass(buyerAddress, buyPriorNonce);
-      await syncListingTx(buyHash);
+      await syncListingTx(buyHash, listingId);
 
       toast.info("Step 3: Finalize purchase…");
       const releasePriorNonce = await getPendingNonce(buyerAddress);
@@ -69,7 +69,7 @@ export function useBuyTicket(walletAddress: string | undefined) {
         gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
       await waitForNonceToPass(buyerAddress, releasePriorNonce);
-      return syncListingTx(releaseHash);
+      return syncListingTx(releaseHash, listingId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.listings() });

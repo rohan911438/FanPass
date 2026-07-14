@@ -34,7 +34,7 @@ export const getPricingSuggestion = asyncHandler(async (req: Request, res: Respo
 });
 
 export const postSync = asyncHandler(async (req: Request, res: Response) => {
-  const { txHash } = req.body as SyncTxInput;
-  const result = await marketplaceService.syncFromChain(txHash as `0x${string}`);
+  const { txHash, listingId } = req.body as SyncTxInput;
+  const result = await marketplaceService.syncFromChain(txHash as `0x${string}`, listingId);
   res.json(result);
 });

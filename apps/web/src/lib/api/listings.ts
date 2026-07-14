@@ -33,6 +33,6 @@ export async function getPricingSuggestion(eventName: string, venue: string): Pr
 }
 
 /** Mirrors a confirmed list/buy/cancel transaction (signed by the connected wallet) into the local store. */
-export async function syncListingTx(txHash: string): Promise<{ processedEvents: string[] }> {
-  return apiPostJson<{ processedEvents: string[] }>("/marketplace/sync", { txHash });
+export async function syncListingTx(txHash: string, listingId: string): Promise<{ processedEvents: string[] }> {
+  return apiPostJson<{ processedEvents: string[] }>("/marketplace/sync", { txHash, listingId });
 }

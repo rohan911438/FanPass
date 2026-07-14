@@ -24,7 +24,7 @@ export function useCancelListing(walletAddress: string | undefined) {
         gas: INJECTIVE_TESTNET_GAS_LIMIT,
       });
       await waitForNonceToPass(address, priorNonce);
-      return syncListingTx(hash);
+      return syncListingTx(hash, listingId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.listings() });

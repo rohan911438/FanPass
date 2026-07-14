@@ -7,7 +7,7 @@
  */
 import "dotenv/config";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
-import { createWalletClient, http, parseEventLogs, formatUnits } from "viem";
+import { createWalletClient, http, formatUnits } from "viem";
 import {
   escrowMarketplaceAbi,
   mockUsdcAbi,
@@ -62,11 +62,11 @@ async function send(
   return txHash as `0x${string}`;
 }
 
-async function sync(txHash: string) {
+async function sync(txHash: string, listingId: string) {
   return api("/marketplace/sync", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ txHash }),
+    body: JSON.stringify({ txHash, listingId }),
   });
 }
 
@@ -171,16 +171,19 @@ async function main() {
     expiresAt,
   ]);
   console.log("  createListing tx:", createListingTx);
-  const listingReceipt = await publicClient.getTransactionReceipt({ hash: createListingTx }).catch(() => null);
-  let listingId: bigint | undefined;
-  if (listingReceipt) {
-    const events = parseEventLogs({ abi: escrowMarketplaceAbi, logs: listingReceipt.logs, eventName: "ListingCreated" });
-    listingId = (events[0]?.args as { listingId?: bigint } | undefined)?.listingId;
-  }
-  console.log("  decoded listingId:", listingId);
+  // Read listingId back from contract state (listingOf) rather than parsing the tx receipt's logs —
+  // eth_getTransactionReceipt and eth_getLogs are both unreliable on this RPC (see apps/api/src/
+  // trustEngine/marketplace.ts); listingOf is a plain view call and has proven reliable.
+  const listingId = await publicClient.readContract({
+    address: env.web3.escrowMarketplaceAddress,
+    abi: escrowMarketplaceAbi,
+    functionName: "listingOf",
+    args: [BigInt(ticket.tokenId)],
+  });
+  console.log("  listingId:", listingId);
 
   console.log("\n[6] Backend sync for createListing tx...");
-  const syncResult1 = await sync(createListingTx);
+  const syncResult1 = await sync(createListingTx, listingId.toString());
   console.log("  sync result:", JSON.stringify(syncResult1));
 
   const listings = await api("/marketplace");
@@ -198,7 +201,7 @@ async function main() {
   console.log("  buy tx:", buyTx);
 
   console.log("\n[9] Backend sync for buy tx...");
-  const syncResult2 = await sync(buyTx);
+  const syncResult2 = await sync(buyTx, listingId.toString());
   console.log("  sync result:", JSON.stringify(syncResult2));
 
   // --- buyer releases escrow ---
@@ -207,7 +210,7 @@ async function main() {
   console.log("  releaseEscrow tx:", releaseTx);
 
   console.log("\n[11] Backend sync for releaseEscrow tx...");
-  const syncResult3 = await sync(releaseTx);
+  const syncResult3 = await sync(releaseTx, listingId.toString());
   console.log("  sync result:", JSON.stringify(syncResult3));
 
   // --- final verification ---
