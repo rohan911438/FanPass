@@ -13,6 +13,7 @@ invisibly underneath, not as a headline feature.
 - **Live app:** [fanpass-web-six.vercel.app](https://fanpass-web-six.vercel.app)
 - **Live API:** [fanpass-api-production.up.railway.app](https://fanpass-api-production.up.railway.app/api/v1/health)
 - **Pitch deck:** [Google Slides](https://docs.google.com/presentation/d/1n7nGFLU2GACDHfnCQfgluCspHOucx0Rk2ji_MUftGeg/edit?usp=sharing)
+- **Announcement:** [X post](https://x.com/Roan0i/status/2077470220172824636?s=20)
 - **Demo video:** [youtu.be/TPXNdKu29Sk](https://youtu.be/TPXNdKu29Sk?si=bFND3GyqXZ_D8cc_)
 
 ---
