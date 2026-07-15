@@ -8,6 +8,7 @@ invisibly underneath, not as a headline feature.
 
 **🔗 Live app:** [fanpass-web-six.vercel.app](https://fanpass-web-six.vercel.app)
 **🔗 Live API:** [fanpass-api-production.up.railway.app](https://fanpass-api-production.up.railway.app/api/v1/health)
+**🔗 Pitch deck:** [Google Slides](https://docs.google.com/presentation/d/1n7nGFLU2GACDHfnCQfgluCspHOucx0Rk2ji_MUftGeg/edit?usp=sharing)
 
 ---
 
