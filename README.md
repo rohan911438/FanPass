@@ -1,3 +1,5 @@
+<img src="./image.png" alt="FanPass logo" width="140" height="140" />
+
 # FanPass
 
 **An AI-powered Trust Network for peer-to-peer World Cup ticket resale.**
@@ -6,9 +8,10 @@ Not an NFT marketplace, not a chatbot wrapper. FanPass sells one thing: certaint
 buying is real, unique, and actually owned by the person selling it — with blockchain and AI working
 invisibly underneath, not as a headline feature.
 
-**🔗 Live app:** [fanpass-web-six.vercel.app](https://fanpass-web-six.vercel.app)
-**🔗 Live API:** [fanpass-api-production.up.railway.app](https://fanpass-api-production.up.railway.app/api/v1/health)
-**🔗 Pitch deck:** [Google Slides](https://docs.google.com/presentation/d/1n7nGFLU2GACDHfnCQfgluCspHOucx0Rk2ji_MUftGeg/edit?usp=sharing)
+- **Live app:** [fanpass-web-six.vercel.app](https://fanpass-web-six.vercel.app)
+- **Live API:** [fanpass-api-production.up.railway.app](https://fanpass-api-production.up.railway.app/api/v1/health)
+- **Pitch deck:** [Google Slides](https://docs.google.com/presentation/d/1n7nGFLU2GACDHfnCQfgluCspHOucx0Rk2ji_MUftGeg/edit?usp=sharing)
+- **Demo video:** [youtu.be/TPXNdKu29Sk](https://youtu.be/TPXNdKu29Sk?si=bFND3GyqXZ_D8cc_)
 
 ---
 
