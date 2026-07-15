@@ -195,6 +195,25 @@ how to split them onto separate signers without redeploying.
 - **Identity** — a connected EVM wallet address *is* the user profile; no login, no separate auth system
 - **Hosting** — Vercel (web), Railway (API)
 
+### Why Injective, specifically
+
+FanPass doesn't just deploy "on a chain" — it's built against pieces of the Injective stack that map
+directly onto problems a resale market actually has:
+
+| Injective piece | What we use it for | Why it makes FanPass better |
+|---|---|---|
+| **Injective EVM (MultiVM)** | `apps/contracts` ships plain Solidity (Hardhat + OpenZeppelin) straight to Injective's EVM execution layer | No custom VM, no bespoke tooling — the same wallets (MetaMask/RainbowKit), the same `viem`/`wagmi` stack, and the same audit patterns the rest of the industry already trusts, on top of Injective's faster, cheaper base layer |
+| **Sub-second finality, low fixed gas** | Every write (`createListing`, `approve`, `buy`, `releaseEscrow`) is a legacy tx forced to `gasPrice = 200 gwei` (see `packages/shared/src/constants/chain.ts`) | A ticket sale is a live, time-pressured negotiation — buyers won't wait minutes or pay unpredictable gas spikes to lock in a seat. Fast, predictably-priced finality is what makes "sign three transactions and get your ticket" feel instant instead of risky |
+| **State reads over event-log indexing** | Marketplace sync polls `listingOf` / `getListing` / `getEscrow` directly instead of relying on `eth_getLogs` (§Architecture above) | Turns an unreliable public-RPC log index into a non-issue — the system is built around what Injective's endpoint is actually reliable at, not around what a generic EVM chain is assumed to support |
+| **Blockscout explorer (testnet.blockscout.injective.network)** | Every deployed contract links out to a live, human-readable explorer view | Buyers and sellers don't have to trust FanPass's word for "this is on-chain" — the Ownership Certificate, the escrow, the attendance record are independently verifiable by anyone, which is the whole point of a trust product |
+| **Circle CCTP over Injective's USDC rail** *(Phase 5, designed)* | Cross-chain buyers burn USDC on their own chain and mint natively on Injective before `EscrowMarketplace.buy()` runs | Removes the single biggest friction in a *global* resale market — "I don't hold USDC on the right chain" — without FanPass ever custodying a bridge or a wrapped asset |
+| **x402 micropayments** *(Phase 5, designed)* | Pay-per-use premium verification tiers settled directly over Injective, instead of a subscription | Fits how tickets are actually bought — a handful of times a year — so users pay for extra assurance only when they need it |
+
+The common thread: every Injective-specific choice traces back to something an ordinary EVM deployment
+either can't do cheaply enough (fast, low-cost finality for a live marketplace) or doesn't do at all
+(native USDC interoperability via CCTP, pay-per-call settlement via x402) — not chain-hopping for its own
+sake.
+
 ---
 
 ## Getting started
@@ -211,6 +230,23 @@ under `apps/api/data/` (see `src/config/localStore.ts`), created automatically o
 Copy `apps/api/.env.example` → `apps/api/.env` and `apps/web/.env.local.example` → `apps/web/.env.local`,
 fill in a funded testnet wallet's private key for `TRUST_ENGINE_SIGNER_PRIVATE_KEY` (must hold
 `VERIFIER_ROLE` + `VENUE_VERIFIER_ROLE` on-chain).
+
+---
+
+## Test tickets
+
+Sample ticket images for exercising the `/verify` pipeline live in
+[`test-assets/tickets/`](./test-assets/tickets) — no need to source or fake your own to try the flow:
+
+| File | Use it to test |
+|---|---|
+| `real_fifa_ticket.png`, and the 6 venue-specific `real_fifa_ticket_*.png` files (MetLife, AT&T Stadium, SoFi, Azteca, BC Place, Mercedes-Benz) | The happy path — a genuine ticket that should pass all six Trust Engine checks and get its Ownership Certificate minted |
+| `fake_fifa_ticket.png` | The fraud path — should trip the tamper/fraud check and get rejected |
+| `real_tickets_manifest.json` | The claimed event/venue/date/seat + QR payload for each `real_fifa_ticket_*` file, so you know what to type into the "claimed details" form to get a match (or mismatch, if you want to test the metadata check failing on purpose) |
+
+Upload any of these through the Verify Ticket page (`http://localhost:3000` once `npm run dev:web` is
+running) to see a live Trust Score, and re-upload the same file a second time to see the duplicate-QR-
+fingerprint check reject it — that's the fraud pipeline working as intended, not a bug.
 
 ---
 
