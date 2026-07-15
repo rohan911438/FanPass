@@ -1,4 +1,6 @@
-<img src="./image.png" alt="FanPass logo" width="140" height="140" />
+<p align="center">
+  <img src="./image.png" alt="FanPass logo" width="140" height="140" />
+</p>
 
 # FanPass
 
@@ -251,19 +253,3 @@ Sample ticket images for exercising the `/verify` pipeline live in
 Upload any of these through the Verify Ticket page (`http://localhost:3000` once `npm run dev:web` is
 running) to see a live Trust Score, and re-upload the same file a second time to see the duplicate-QR-
 fingerprint check reject it — that's the fraud pipeline working as intended, not a bug.
-
----
-
-## Status
-
-**Phase 1–4 complete and deployed:** monorepo scaffold, design system, wallet connect, ticket upload +
-6-agent verification pipeline with a live-polling Trust Score card, a real marketplace (listing, browsing,
-non-custodial buy/escrow flow, seller reputation), and the three-contract trust layer live on Injective EVM
-Testnet with the backend fully wired to it — verification mints a real Ownership Certificate, and every
-marketplace action is a transaction signed by the connected wallet, reconciled into the local store via
-direct contract-state reads.
-
-**Phase 5 in progress:** MCP tool bus for agents, x402 premium verification tiers, USDC/CCTP cross-chain
-settlement. See [`docs/PHASE_5_ECOSYSTEM_INTEGRATION.md`](./docs/PHASE_5_ECOSYSTEM_INTEGRATION.md).
-
-Full architecture, database schema, and design rationale: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
